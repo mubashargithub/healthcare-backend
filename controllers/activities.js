@@ -30,20 +30,27 @@ exports.logActivity = async (req, res, next) => {
 // @access  Private/Admin
 exports.getActivities = async (req, res, next) => {
     try {
-        const { timeframe, category } = req.query;
+        const { timeframe, category, startDate, endDate } = req.query;
 
         let dateFilter = {};
-        if (timeframe && timeframe !== 'all') {
-            const now = new Date();
-            let startDate = new Date();
-            if (timeframe === 'daily') {
-                startDate.setDate(now.getDate() - 1);
-            } else if (timeframe === 'monthly') {
-                startDate.setMonth(now.getMonth() - 1);
-            } else if (timeframe === 'yearly') {
-                startDate.setFullYear(now.getFullYear() - 1);
+        if (startDate || endDate) {
+            if (startDate) dateFilter.$gte = new Date(startDate);
+            if (endDate) {
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                dateFilter.$lte = end;
             }
-            dateFilter = { $gte: startDate };
+        } else if (timeframe && timeframe !== 'all') {
+            const now = new Date();
+            let start = new Date();
+            if (timeframe === 'daily') {
+                start.setDate(now.getDate() - 1);
+            } else if (timeframe === 'monthly') {
+                start.setMonth(now.getMonth() - 1);
+            } else if (timeframe === 'yearly') {
+                start.setFullYear(now.getFullYear() - 1);
+            }
+            dateFilter = { $gte: start };
         }
 
         let activities = [];
